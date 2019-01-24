@@ -1,11 +1,11 @@
-ORG_PATH=github.com/Azure
+ORG_PATH=github.com/graniterocks
 PROJECT_NAME := aad-pod-identity
 REPO_PATH="$(ORG_PATH)/$(PROJECT_NAME)"
 NMI_BINARY_NAME := nmi
 MIC_BINARY_NAME := mic
 DEMO_BINARY_NAME := demo
-NMI_VERSION=1.3
-MIC_VERSION=1.2
+NMI_VERSION=1.3vipps1
+MIC_VERSION=1.3vipps1
 DEMO_VERSION=1.2
 
 VERSION_VAR := $(REPO_PATH)/version.Version
@@ -29,7 +29,7 @@ endif
 GO_BUILD_OPTIONS := -buildmode=${GO_BUILD_MODE} -ldflags "-s -X $(VERSION_VAR)=$(NMI_VERSION) -X $(GIT_VAR)=$(GIT_HASH) -X $(BUILD_DATE_VAR)=$(BUILD_DATE)"
 
 # useful for other docker repos
-REGISTRY ?= nikhilbh
+REGISTRY ?= vippsgfacr.azurecr.io
 NMI_IMAGE_NAME := $(REGISTRY)/$(NMI_BINARY_NAME)
 MIC_IMAGE_NAME := $(REGISTRY)/$(MIC_BINARY_NAME)
 DEMO_IMAGE_NAME := $(REGISTRY)/$(DEMO_BINARY_NAME)
@@ -47,13 +47,13 @@ clean:
 	rm -rf bin/$(PROJECT_NAME)
 
 build-nmi:clean-nmi
-	GOOS=linux GOARCH=amd64 go build -o bin/$(PROJECT_NAME)/$(NMI_BINARY_NAME) $(GO_BUILD_OPTIONS) github.com/Azure/$(PROJECT_NAME)/cmd/$(NMI_BINARY_NAME)
+	GOOS=linux GOARCH=amd64 go build -o bin/$(PROJECT_NAME)/$(NMI_BINARY_NAME) $(GO_BUILD_OPTIONS) github.com/graniterocks/$(PROJECT_NAME)/cmd/$(NMI_BINARY_NAME)
 
 build-mic:clean-mic
-	GOOS=linux GOARCH=amd64 go build -o bin/$(PROJECT_NAME)/$(MIC_BINARY_NAME) $(GO_BUILD_OPTIONS) github.com/Azure/$(PROJECT_NAME)/cmd/$(MIC_BINARY_NAME)
+	GOOS=linux GOARCH=amd64 go build -o bin/$(PROJECT_NAME)/$(MIC_BINARY_NAME) $(GO_BUILD_OPTIONS) github.com/graniterocks/$(PROJECT_NAME)/cmd/$(MIC_BINARY_NAME)
 
 build-demo:clean-demo
-	GOOS=linux GOARCH=amd64 go build -o bin/$(PROJECT_NAME)/$(DEMO_BINARY_NAME) $(GO_BUILD_OPTIONS) github.com/Azure/$(PROJECT_NAME)/cmd/$(DEMO_BINARY_NAME)
+	GOOS=linux GOARCH=amd64 go build -o bin/$(PROJECT_NAME)/$(DEMO_BINARY_NAME) $(GO_BUILD_OPTIONS) github.com/graniterocks/$(PROJECT_NAME)/cmd/$(DEMO_BINARY_NAME)
 
 build:clean build-nmi build-mic build-demo
 
