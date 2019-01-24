@@ -148,7 +148,7 @@ func (s *Server) hostHandler(logger *log.Entry, w http.ResponseWriter, r *http.R
 		return
 	}
 
-	podIDs, err := s.KubeClient.ListPodIds(podns, podname)
+	podIDs, err := s.ListPodIdsWithTries(podns, podname, 7, logger)
 	if err != nil || len(*podIDs) == 0 {
 		msg := fmt.Sprintf("no AzureAssignedIdentity found for pod:%s/%s", podns, podname)
 		logger.Errorf("%s, %+v", msg, err)
@@ -194,7 +194,7 @@ func (s *Server) msiHandler(logger *log.Entry, w http.ResponseWriter, r *http.Re
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	podIDs, err := s.KubeClient.ListPodIds(podns, podname)
+	podIDs, err := s.ListPodIdsWithTries(podns, podname, 10, logger)
 	if err != nil || len(*podIDs) == 0 {
 		msg := fmt.Sprintf("no AzureAssignedIdentity found for pod:%s/%s", podns, podname)
 		logger.Errorf("%s, %+v", msg, err)
@@ -215,6 +215,19 @@ func (s *Server) msiHandler(logger *log.Entry, w http.ResponseWriter, r *http.Re
 		return
 	}
 	w.Write(response)
+}
+
+func (s *Server) ListPodIdsWithTries(podns string, podname string, tries int, logger *log.Entry) (*[]aadpodid.AzureIdentity, error) {
+	podIDs, err := s.KubeClient.ListPodIds(podns, podname)
+
+	if (err != nil || len(*podIDs) == 0) && tries > 0 {
+		msg := fmt.Sprintf("no AzureAssignedIdentity found for pod:%s/%s, retrying ...", podns, podname)
+		logger.Errorf("%s, %+v", msg, err)
+		time.Sleep(1000 * time.Millisecond)
+		return s.ListPodIdsWithTries(podns, podname, tries - 1, logger)
+	} else {
+		return podIDs, err
+	}
 }
 
 func getTokenForMatchingIDWithTries(logger *log.Entry, rqClientID string, rqResource string, podIDs *[]aadpodid.AzureIdentity, tries int) (*adal.Token, string, error) {
