@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	getPodListTries                 = 5
-	getPodListSleepTimeMilliseconds = 300
+	getPodListTries                 = 30
+	getPodListSleepTimeMilliseconds = 1000
 )
 
 // Client api client
