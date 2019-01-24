@@ -156,7 +156,7 @@ func (s *Server) hostHandler(logger *log.Entry, w http.ResponseWriter, r *http.R
 		return
 	}
 	rqClientID, rqResource := parseRequestClientIDAndResource(r)
-	token, clientID, err := getTokenForMatchingID(logger, rqClientID, rqResource, podIDs)
+	token, clientID, err := getTokenForMatchingIDWithTries(logger, rqClientID, rqResource, podIDs, 10)
 	if err != nil {
 		logger.Errorf("failed to get service principal token for pod:%s/%s, %+v", podns, podname, err)
 		http.Error(w, err.Error(), http.StatusForbidden)
@@ -202,7 +202,7 @@ func (s *Server) msiHandler(logger *log.Entry, w http.ResponseWriter, r *http.Re
 		return
 	}
 	rqClientID, rqResource := parseRequestClientIDAndResource(r)
-	token, _, err := getTokenForMatchingID(logger, rqClientID, rqResource, podIDs)
+	token, _, err := getTokenForMatchingIDWithTries(logger, rqClientID, rqResource, podIDs, 10)
 	if err != nil {
 		logger.Errorf("failed to get service principal token for pod:%s/%s, %+v", podns, podname, err)
 		http.Error(w, err.Error(), http.StatusForbidden)
@@ -215,6 +215,17 @@ func (s *Server) msiHandler(logger *log.Entry, w http.ResponseWriter, r *http.Re
 		return
 	}
 	w.Write(response)
+}
+
+func getTokenForMatchingIDWithTries(logger *log.Entry, rqClientID string, rqResource string, podIDs *[]aadpodid.AzureIdentity, tries int) (*adal.Token, string, error) {
+	token, clientID, err := getTokenForMatchingID(logger, rqClientID, rqResource, podIDs)
+
+	if err != nil && tries > 0 {
+		time.Sleep(1000 * time.Millisecond)
+		return getTokenForMatchingIDWithTries(logger, rqClientID, rqResource, podIDs, tries - 1)
+	} else {
+		return token, clientID, err
+	}
 }
 
 func getTokenForMatchingID(logger *log.Entry, rqClientID string, rqResource string, podIDs *[]aadpodid.AzureIdentity) (token *adal.Token, clientID string, err error) {
